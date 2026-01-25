@@ -97,3 +97,42 @@ ome_result = conn.execute("""
 conn.unregister("_selected_practices")
 
 st.dataframe(ome_result)
+
+# ---- calculate percentages ----
+ome_result["percentage"] = (ome_result["ome_dose"] / total * 100).round(1)
+
+# ---- create custom labels ----
+ome_result["label"] = ome_result.apply(lambda row: f"{row['bs_nm']}<br>{row['ome_dose']:.1f} ({row['percentage']:.1f}%)", axis=1)
+
+# ---- create donut chart with pull effect for spacing ----
+fig = go.Figure(data=[go.Pie(
+    labels=ome_result["bs_nm"],
+    values=ome_result["ome_dose"],
+    hole=0.5,
+    textposition='outside',
+    textinfo='label+percent',
+    text=ome_result["label"],
+    hovertemplate='<b>%{label}</b><br>Amount: %{value:.1f}<br>Percentage: %{percent}<extra></extra>',
+    marker=dict(
+        line=dict(width=1, color="white")
+    ),
+    pull=[0.05] * len(ome_result),  # slight pull for all slices
+    textfont=dict(size=18),
+    insidetextorientation='radial'
+)])
+
+# ---- update layout ----
+fig.update_layout(
+    showlegend=False,
+    margin=dict(l=250, r=250, t=80, b=80),
+    height=600,
+    #annotations=[dict(
+       # text='Total<br>' + f'{total:.1f}',
+       # x=0.5, y=0.5,
+       # font_size=16,
+        #showarrow=False
+    #)]
+)
+
+# ---- render ----
+st.plotly_chart(fig, use_container_width=True)
