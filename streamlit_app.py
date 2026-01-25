@@ -91,17 +91,35 @@ ome_result = conn.execute("""
 
 conn.unregister("_selected_practices")
 
-# ---- calculate percentages ----
+# ---- Calculate total and percentages ----
 total = ome_result["ome_dose"].sum()
 ome_result["percentage"] = (ome_result["ome_dose"] / total * 100).round(1)
 
-# ---- create custom labels ----
-ome_result["label"] = ome_result.apply(lambda row: f"{row['bs_nm']}<br>{row['ome_dose']:.1f} ({row['percentage']:.1f}%)", axis=1)
+# ---- Create display name: original name or "Other" if < 1% ----
+threshold = 1.0
+ome_result["display_name"] = ome_result.apply(
+    lambda row: row["bs_nm"] if row["percentage"] >= threshold else "Other",
+    axis=1
+)
 
-# ---- create donut chart with pull effect for spacing ----
+# ---- Group by display name (this combines all "Other" rows) ----
+ome_grouped = ome_result.groupby("display_name", as_index=False).agg({
+    "ome_dose": "sum"
+})
+
+# ---- Recalculate percentages after grouping ----
+ome_grouped["percentage"] = (ome_grouped["ome_dose"] / total * 100).round(1)
+
+# ---- Create custom labels ----
+ome_grouped["label"] = ome_grouped.apply(
+    lambda row: f"{row['display_name']}<br>{row['ome_dose']:.1f} ({row['percentage']:.1f}%)", 
+    axis=1
+)
+
+# ---- Create donut chart ----
 fig = go.Figure(data=[go.Pie(
-    labels=ome_result["bs_nm"],
-    values=ome_result["ome_dose"],
+    labels=ome_grouped["display_name"],
+    values=ome_grouped["ome_dose"],
     hole=0.5,
     textposition='outside',
     textinfo='label+percent',
@@ -109,13 +127,10 @@ fig = go.Figure(data=[go.Pie(
     marker=dict(
         line=dict(width=1, color="white")
     ),
-    pull=[0.05] * len(ome_result),
-    textfont=dict(size=14),  # Reduced size slightly
+    pull=[0.05] * len(ome_grouped),
+    textfont=dict(size=14),
     insidetextorientation='radial',
-    # Add these for better label positioning:
-    automargin=True,
-    direction='clockwise',
-    sort=False  # Keep your data order
+    automargin=True
 )])
 
 # ---- update layout ----
