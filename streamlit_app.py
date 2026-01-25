@@ -138,12 +138,6 @@ fig.update_layout(
     showlegend=False,
     margin=dict(l=150, r=150, t=100, b=100),  # More balanced margins
     height=700,  # Taller to accommodate labels
-    annotations=[dict(
-        text='Total<br>' + f'{total:.1f}',
-        x=0.5, y=0.5,
-        font_size=20,
-        showarrow=False
-    )]
 )
 
 # ---- render ----
