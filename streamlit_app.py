@@ -32,6 +32,10 @@ try:
         ccgs
         ON
         ccgs.code = practices.ccg_id
+        INNER JOIN
+        stps
+        ON
+        ccgs.stp_id = stps.code
         WHERE practices.close_date IS NULL 
         AND setting = 4
         """).fetchdf()
