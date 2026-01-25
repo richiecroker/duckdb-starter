@@ -31,7 +31,7 @@ try:
         INNER JOIN
         ccgs
         ON
-        ccgs.code = practices.pct_id
+        ccgs.code = practices.ccg_id
         WHERE close_date IS NULL 
         AND setting = 4
         """).fetchdf()
