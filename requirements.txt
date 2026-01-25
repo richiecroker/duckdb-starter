@@ -3,3 +3,4 @@ duckdb
 google-cloud-bigquery
 pyarrow
 pandas
+plotly

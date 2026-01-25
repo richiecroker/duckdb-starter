@@ -6,6 +6,7 @@ from google.oauth2 import service_account
 from google.cloud import bigquery
 import pandas as pd
 import itertools
+import plotly.graph_objects as go
 
 st.title("Main app (app.py)")
 
