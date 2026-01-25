@@ -42,8 +42,6 @@ try:
         WHERE practices.close_date IS NULL 
         AND setting = 4
         """).fetchdf()
-    st.dataframe(result) 
-    st.caption(f"Returned {len(result):,} rows")
 except Exception as e:
     st.error(f"Query failed: {e}")
     st.info("If the table is missing, run the loader page first to create `practices`.")
