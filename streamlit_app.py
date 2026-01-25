@@ -20,7 +20,17 @@ conn = duckdb.connect("app.duckdb")  # same file
 st.write(conn.execute("SHOW TABLES").fetchdf())
 
 try:
-    result = conn.execute("SELECT * FROM practices WHERE close_date IS NULL AND setting = 4").fetchdf()
+    result = conn.execute(
+        """
+        SELECT * 
+        FROM practices
+        INNER JOIN
+        pcns
+        ON
+        pcns.code = practices.pcn
+        WHERE close_date IS NULL 
+        AND setting = 4
+        """).fetchdf()
     st.dataframe(result)
     st.caption(f"Returned {len(result):,} rows")
 except Exception as e:
