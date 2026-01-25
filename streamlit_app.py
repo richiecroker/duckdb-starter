@@ -16,9 +16,6 @@ st.title("Main app (app.py)")
 
 conn = duckdb.connect("app.duckdb")  # same file
 
-# optional: show tables
-st.write(conn.execute("SHOW TABLES").fetchdf())
-
 try:
     result = conn.execute(
         """
@@ -45,7 +42,7 @@ try:
         WHERE practices.close_date IS NULL 
         AND setting = 4
         """).fetchdf()
-    st.dataframe(result)
+    st.dataframe(result) 
     st.caption(f"Returned {len(result):,} rows")
 except Exception as e:
     st.error(f"Query failed: {e}")
@@ -81,7 +78,6 @@ pr_map = {opt: opt.split(" (")[-1][:-1] for opt in pr_opts if opt != ALL}
 sel_pr = st.selectbox("Practice", pr_opts, index=0)
 practice_codes = df_pcn["practice_code"].unique().tolist() if sel_pr == ALL else [pr_map[sel_pr]]
 
-st.write("practice_codes:", practice_codes)
 
 codes_df = pd.DataFrame({"practice_code": practice_codes})
 
@@ -96,8 +92,6 @@ ome_result = conn.execute("""
 """).fetchdf()
 
 conn.unregister("_selected_practices")
-
-st.dataframe(ome_result)
 
 # ---- calculate percentages ----
 total = ome_result["ome_dose"].sum()
