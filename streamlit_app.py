@@ -173,4 +173,4 @@ detail_result = conn.execute("""
 
 conn.unregister("_selected_substances")
 conn.unregister("_selected_practices")
-st.dataframe(detail_result)
+st.dataframe(detail_result, use_container_width=True, hide_index=True)
