@@ -104,7 +104,9 @@ ome_result["display_name"] = ome_result.apply(
 
 # ---- Group by display name (this combines all "Other" rows) ----
 ome_grouped = ome_result.groupby("display_name", as_index=False).agg({
-    "ome_dose": "sum"
+    "ome_dose": "sum",
+    "bs_ing": "first",  # Keep the first bs_ing for each group
+    "bs_nm": "first"    # Keep the first bs_nm for each group
 })
 
 # ---- Recalculate percentages after grouping ----
