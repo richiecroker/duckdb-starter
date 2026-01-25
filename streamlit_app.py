@@ -153,8 +153,6 @@ sel_bs = st.selectbox("Substance", bs_opts, index=0, key="substance_select")
 sel_bs_codes = ome_grouped["bs_ing"].unique().tolist() if sel_bs == ALL else [bs_map[sel_bs]]
 df_bs = ome_grouped[ome_grouped["bs_ing"].isin(sel_bs_codes)]
 
-st.dataframe(df_bs)
-
 # Create a temporary table with selected substance codes
 bs_codes_df = pd.DataFrame({"bs_ing": sel_bs_codes})
 conn.register("_selected_substances", bs_codes_df)
