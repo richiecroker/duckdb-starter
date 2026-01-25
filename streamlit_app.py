@@ -27,7 +27,7 @@ try:
         INNER JOIN
         pcns
         ON
-        pcns.code = practices.pcn
+        pcns.code = practices.pcn_id
         WHERE close_date IS NULL 
         AND setting = 4
         """).fetchdf()
