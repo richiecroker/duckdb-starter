@@ -152,4 +152,27 @@ bs_map = dict(zip(bs_pairs["bs_nm"], bs_pairs["bs_ing"]))  # Map name to code
 sel_bs = st.selectbox("Substance", bs_opts, index=0, key="substance_select")
 sel_bs_codes = ome_grouped["bs_ing"].unique().tolist() if sel_bs == ALL else [bs_map[sel_bs]]
 df_bs = ome_grouped[ome_grouped["bs_ing"].isin(sel_bs_codes)]
+
 st.dataframe(df_bs)
+
+# Create a temporary table with selected substance codes
+bs_codes_df = pd.DataFrame({"bs_ing": sel_bs_codes})
+conn.register("_selected_substances", bs_codes_df)
+conn.register("_selected_practices", codes_df)
+# Query with both practice and substance filters
+detail_result = conn.execute("""
+    SELECT 
+        t.bnf_name,
+        SUM(t.ome_dose) as total_ome
+    FROM ome_data t
+    JOIN _selected_practices s
+      ON t.practice = s.practice_code
+    JOIN _selected_substances b
+      ON COALESCE(t.bs_subid, t.ing) = b.bs_ing
+    GROUP BY t.bnf_name
+    ORDER BY total_ome DESC
+""").fetchdf()
+
+conn.unregister("_selected_substances")
+conn.unregister("_selected_practices")
+st.dataframe(detail_result)
