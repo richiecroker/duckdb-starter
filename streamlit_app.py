@@ -30,7 +30,7 @@ SELECT
     'Item ' || i as name,
     i as id,
     (i * 10.5) as price
-FROM range(1, 11) as t(i)
+FROM range(1, 101111) as t(i)
 """, language="sql")
 
 # Query the data
