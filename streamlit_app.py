@@ -100,8 +100,8 @@ ome_result["label"] = ome_result.apply(lambda row: f"{row['bs_nm']}<br>{row['ome
 
 # ---- create donut chart with pull effect for spacing ----
 fig = go.Figure(data=[go.Pie(
-    labels=agg["bs_nm"],
-    values=agg["ome_dose"],
+    labels=ome_result["bs_nm"],
+    values=ome_result["ome_dose"],
     hole=0.5,
     textposition='outside',
     textinfo='label+percent',
@@ -109,7 +109,7 @@ fig = go.Figure(data=[go.Pie(
     marker=dict(
         line=dict(width=1, color="white")
     ),
-    pull=[0.05] * len(agg),
+    pull=[0.05] * len(ome_result),
     textfont=dict(size=14),  # Reduced size slightly
     insidetextorientation='radial',
     # Add these for better label positioning:
