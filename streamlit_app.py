@@ -142,3 +142,12 @@ fig.update_layout(
 
 # ---- render ----
 st.plotly_chart(fig, use_container_width=True)
+
+# Substance (bs_ing and bs_nm)
+bs_pairs = ome_grouped[["bs_ing","bs_nm"]].drop_duplicates().sort_values("bs_nm")
+bs_opts = [ALL] + [f"{r.bs_nm} ({r.bs_ing})" for r in bs_pairs.itertuples()]
+bs_map = {opt: opt.split(" (")[-1][:-1] for opt in bs_opts if opt != ALL}
+sel_bs = st.selectbox("Substance", bs_opts, index=0)
+sel_bs_codes = ome_grouped["bs_ing"].unique().tolist() if sel_bs == ALL else [bs_map[sel_bs]]
+df_bs = ome_grouped[ome_grouped["bs_ing"].isin(sel_bs_codes)]
+st.dataframe(df_bs)
