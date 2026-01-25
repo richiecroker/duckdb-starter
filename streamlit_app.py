@@ -28,6 +28,10 @@ try:
         pcns
         ON
         pcns.code = practices.pcn_id
+        INNER JOIN
+        ccgs
+        ON
+        ccgs.code = practices.pct_id
         WHERE close_date IS NULL 
         AND setting = 4
         """).fetchdf()
