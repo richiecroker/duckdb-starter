@@ -87,11 +87,11 @@ codes_df = pd.DataFrame({"practice_code": practice_codes})
 conn.register("_selected_practices", codes_df)
 
 ome_result = conn.execute("""
-    SELECT COALESCE(bs_subid, ing) AS ing, bs_nm, SUM(ome_dose) AS ome_dose
+    SELECT COALESCE(bs_subid, ing) AS bs_ing, bs_nm, SUM(ome_dose) AS ome_dose
     FROM ome_data t
     JOIN _selected_practices s
       ON t.practice = s.practice_code
-    GROUP BY ing, bs_nm
+    GROUP BY bs_ing, bs_nm
 """).fetchdf()
 
 conn.unregister("_selected_practices")
