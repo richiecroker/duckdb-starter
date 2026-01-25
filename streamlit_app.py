@@ -100,32 +100,35 @@ ome_result["label"] = ome_result.apply(lambda row: f"{row['bs_nm']}<br>{row['ome
 
 # ---- create donut chart with pull effect for spacing ----
 fig = go.Figure(data=[go.Pie(
-    labels=ome_result["bs_nm"],
-    values=ome_result["ome_dose"],
+    labels=agg["bs_nm"],
+    values=agg["ome_dose"],
     hole=0.5,
     textposition='outside',
     textinfo='label+percent',
-    text=ome_result["label"],
     hovertemplate='<b>%{label}</b><br>Amount: %{value:.1f}<br>Percentage: %{percent}<extra></extra>',
     marker=dict(
         line=dict(width=1, color="white")
     ),
-    pull=[0.05] * len(ome_result),  # slight pull for all slices
-    textfont=dict(size=18),
-    insidetextorientation='radial'
+    pull=[0.05] * len(agg),
+    textfont=dict(size=14),  # Reduced size slightly
+    insidetextorientation='radial',
+    # Add these for better label positioning:
+    automargin=True,
+    direction='clockwise',
+    sort=False  # Keep your data order
 )])
 
 # ---- update layout ----
 fig.update_layout(
     showlegend=False,
-    margin=dict(l=250, r=250, t=80, b=80),
-    height=600,
-    #annotations=[dict(
-       # text='Total<br>' + f'{total:.1f}',
-       # x=0.5, y=0.5,
-       # font_size=16,
-        #showarrow=False
-    #)]
+    margin=dict(l=150, r=150, t=100, b=100),  # More balanced margins
+    height=700,  # Taller to accommodate labels
+    annotations=[dict(
+        text='Total<br>' + f'{total:.1f}',
+        x=0.5, y=0.5,
+        font_size=20,
+        showarrow=False
+    )]
 )
 
 # ---- render ----
