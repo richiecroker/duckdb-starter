@@ -88,9 +88,9 @@ conn.register("_selected_practices", codes_df)
 
 ome_result = conn.execute("""
     SELECT t.*
-    FROM your_table t
+    FROM ome_data t
     JOIN _selected_practices s
-      ON t.practice_code = s.practice_code
+      ON t.practice = s.practice_code
 """).fetchdf()
 
 conn.unregister("_selected_practices")
