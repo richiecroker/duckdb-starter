@@ -32,7 +32,7 @@ try:
         ccgs
         ON
         ccgs.code = practices.ccg_id
-        WHERE close_date IS NULL 
+        WHERE practices.close_date IS NULL 
         AND setting = 4
         """).fetchdf()
     st.dataframe(result)
