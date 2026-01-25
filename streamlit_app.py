@@ -81,3 +81,18 @@ sel_pr = st.selectbox("Practice", pr_opts, index=0)
 practice_codes = df_pcn["practice_code"].unique().tolist() if sel_pr == ALL else [pr_map[sel_pr]]
 
 st.write("practice_codes:", practice_codes)
+
+codes_df = pd.DataFrame({"practice_code": practice_codes})
+
+conn.register("_selected_practices", codes_df)
+
+ome_result = conn.execute("""
+    SELECT t.*
+    FROM your_table t
+    JOIN _selected_practices s
+      ON t.practice_code = s.practice_code
+""").fetchdf()
+
+conn.unregister("_selected_practices")
+
+st.dataframe(ome_result)
