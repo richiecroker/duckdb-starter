@@ -149,7 +149,7 @@ st.plotly_chart(fig, use_container_width=True)
 bs_pairs = ome_grouped[["bs_ing","bs_nm"]].drop_duplicates().sort_values("bs_nm")
 bs_opts = [ALL] + [r.bs_nm for r in bs_pairs.itertuples()]
 bs_map = dict(zip(bs_pairs["bs_nm"], bs_pairs["bs_ing"]))  # Map name to code
-sel_bs = st.selectbox("Substance", bs_opts, index=0)
+sel_bs = st.selectbox("Substance", bs_opts, index=0, key="substance_select")
 sel_bs_codes = ome_grouped["bs_ing"].unique().tolist() if sel_bs == ALL else [bs_map[sel_bs]]
 df_bs = ome_grouped[ome_grouped["bs_ing"].isin(sel_bs_codes)]
 st.dataframe(df_bs)
