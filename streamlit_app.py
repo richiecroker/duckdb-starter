@@ -99,6 +99,7 @@ conn.unregister("_selected_practices")
 st.dataframe(ome_result)
 
 # ---- calculate percentages ----
+total = ome_result["ome_dose"].sum()
 ome_result["percentage"] = (ome_result["ome_dose"] / total * 100).round(1)
 
 # ---- create custom labels ----
