@@ -10,10 +10,19 @@ import itertools
 st.title("Main app (app.py)")
 
 
-duckdb_query = """
-SELECT * from practices
-"""
+# pages/query_practices.py (consumer)
+import streamlit as st
+import duckdb
 
-result = conn.execute(duckdb_query).fetchdf()
-st.dataframe(result)
-st.caption(f"Returned {len(result):,} rows")
+conn = duckdb.connect("app.duckdb")  # same file
+
+# optional: show tables
+st.write(conn.execute("SHOW TABLES").fetchdf())
+
+try:
+    result = conn.execute("SELECT * FROM practices LIMIT 100").fetchdf()
+    st.dataframe(result)
+    st.caption(f"Returned {len(result):,} rows")
+except Exception as e:
+    st.error(f"Query failed: {e}")
+    st.info("If the table is missing, run the loader page first to create `practices`.")
