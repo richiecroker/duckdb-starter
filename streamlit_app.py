@@ -52,116 +52,39 @@ except Exception as e:
     st.info("If the table is missing, run the loader page first to create `practices`.")
 
 
-import streamlit as st
-import pandas as pd
+# assume `result` exists and has the exact columns you listed
+df = result.copy()
+for c in ["icb_name","icb_code","pcn_name","pcn_code","practice_name","practice_code"]:
+    df[c] = df[c].astype(str).fillna("").str.strip()
 
-# ---------------------------
-# Config: the column names in your DataFrame
-# Adjust these if your columns are named differently.
-# ---------------------------
-icb_col = "stps"           # column that contains STP codes/names
-PCN_COL = "PCN"            # column that contains PCN codes/names
-PRACTICE_COL = "practice_code"  # column that contains practice code (the final key)
+st.header("Filters: ICB → PCN → Practice")
 
-# ---------------------------
-# Guard: make sure 'result' exists
-# ---------------------------
-if 'result' not in globals():
-    st.error("No `result` DataFrame found. This code expects a pandas DataFrame named `result`.")
-else:
-    # work on a copy with string-casted columns for robust comparisons
-    df = result.copy()
-    for c in (STP_COL, PCN_COL, PRACTICE_COL):
-        if c in df.columns:
-            df[c] = df[c].astype(str).fillna("").str.strip()
-        else:
-            # create empty column to avoid KeyError and let user see missing column message
-            df[c] = ""
+# ICB: show name but map to code
+icb_pairs = df[["icb_code","icb_name"]].drop_duplicates().sort_values("icb_name")
+icb_labels = [f"{r.icb_name} ({r.icb_code})" if r.icb_name else r.icb_code for r in icb_pairs.itertuples()]
+icb_map = {lab: row.icb_code for lab,row in zip(icb_labels, icb_pairs.itertuples())}
 
-    st.header("Cascading filters: STP → PCN → Practice")
+selected_icbs = st.multiselect("ICB", icb_labels, default=icb_labels)
+selected_icb_codes = [icb_map[l] for l in selected_icbs]
 
-    # ---------------------------
-    # Build STP options
-    # ---------------------------
-    stp_options = sorted(df[STP_COL].replace("", pd.NA).dropna().unique().tolist())
-    # session_state defaults so selection persists
-    if "selected_stps" not in st.session_state:
-        st.session_state.selected_stps = stp_options.copy()  # default: all selected
-    selected_stps = st.multiselect("Filter by STP", options=stp_options, default=st.session_state.selected_stps)
-    st.session_state.selected_stps = selected_stps
+df_icb = df[df["icb_code"].isin(selected_icb_codes)] if selected_icb_codes else df.iloc[0:0]
 
-    # apply STP filter to produce PCN options
-    df_after_stp = df[df[STP_COL].isin([str(x) for x in selected_stps])] if selected_stps else df.iloc[0:0]
+# PCN (dependent)
+pcn_pairs = df_icb[["pcn_code","pcn_name"]].drop_duplicates().sort_values("pcn_name")
+pcn_labels = [f"{r.pcn_name} ({r.pcn_code})" if r.pcn_name else r.pcn_code for r in pcn_pairs.itertuples()]
+pcn_map = {lab: row.pcn_code for lab,row in zip(pcn_labels, pcn_pairs.itertuples())}
 
-    # ---------------------------
-    # Build PCN options (dependent on STP)
-    # ---------------------------
-    pcn_options = sorted(df_after_stp[PCN_COL].replace("", pd.NA).dropna().unique().tolist())
-    if "selected_pcns" not in st.session_state:
-        st.session_state.selected_pcns = pcn_options.copy()
-    selected_pcns = st.multiselect("Filter by PCN", options=pcn_options, default=st.session_state.selected_pcns)
-    st.session_state.selected_pcns = selected_pcns
+selected_pcns = st.multiselect("PCN", pcn_labels, default=pcn_labels)
+selected_pcn_codes = [pcn_map[l] for l in selected_pcns]
 
-    # apply PCN filter to produce Practice options
-    df_after_pcn = df_after_stp[df_after_stp[PCN_COL].isin([str(x) for x in selected_pcns])] if selected_pcns else df_after_stp.iloc[0:0]
+df_pcn = df_icb[df_icb["pcn_code"].isin(selected_pcn_codes)] if selected_pcn_codes else df_icb.iloc[0:0]
 
-    # ---------------------------
-    # Build Practice options (dependent on PCN)
-    # ---------------------------
-    practice_options = sorted(df_after_pcn[PRACTICE_COL].replace("", pd.NA).dropna().unique().tolist())
-    if "selected_practices_ui" not in st.session_state:
-        st.session_state.selected_practices_ui = practice_options.copy()
-    selected_practices_ui = st.multiselect("Filter by Practice (final)", options=practice_options, default=st.session_state.selected_practices_ui)
-    st.session_state.selected_practices_ui = selected_practices_ui
+# Practices (final)
+practice_pairs = df_pcn[["practice_code","practice_name"]].drop_duplicates().sort_values("practice_name")
+practice_labels = [f"{r.practice_name} ({r.practice_code})" if r.practice_name else r.practice_code for r in practice_pairs.itertuples()]
+practice_map = {lab: row.practice_code for lab,row in zip(practice_labels, practice_pairs.itertuples())}
 
-    # ---------------------------
-    # Final list of practice codes
-    # ---------------------------
-    practice_codes = [str(x) for x in selected_practices_ui]
+selected_practices = st.multiselect("Practice", practice_labels, default=practice_labels)
+practice_codes = [practice_map[l] for l in selected_practices]
 
-    st.subheader("Selected practice codes")
-    if practice_codes:
-        st.write(practice_codes)
-        st.caption(f"{len(practice_codes):,} selected")
-    else:
-        st.info("No practice codes selected (or no options available after previous filters).")
-
-    # ---------------------------
-    # Example: use these practice_codes in a DuckDB query (safe)
-    # We'll register the list as a tiny DataFrame and join in DuckDB.
-    # Requires `conn` to be the same DuckDB connection used by your app.
-    # ---------------------------
-    if 'conn' in globals() and practice_codes:
-        if st.button("Run DuckDB query for selected practices"):
-            # create a tiny DF and register as a temp view name that won't conflict
-            sel_df = pd.DataFrame({PRACTICE_COL: practice_codes})
-            tmp_name = "__selected_practices"
-            try:
-                # drop previous view/table if it exists
-                try:
-                    conn.execute(f"DROP VIEW IF EXISTS {tmp_name}")
-                except Exception:
-                    pass
-                conn.register(tmp_name, sel_df)
-
-                # Example query: replace other_table with the real table you want to filter
-                sql = f"""
-                SELECT t.*
-                FROM other_table AS t
-                JOIN {tmp_name} AS s
-                  ON CAST(t.{PRACTICE_COL} AS VARCHAR) = s.{PRACTICE_COL}
-                """
-                # execute and show
-                out = conn.execute(sql).fetchdf()
-                st.dataframe(out)
-                st.caption(f"Returned {len(out):,} rows")
-            finally:
-                # unregister the temporary relation
-                try:
-                    conn.unregister(tmp_name)
-                except Exception:
-                    pass
-    else:
-        if 'conn' not in globals():
-            st.info("DuckDB connection `conn` not found in scope — can't run the example query.")
-
+st.write("Selected practice_codes:", practice_codes)
