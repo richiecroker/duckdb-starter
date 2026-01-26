@@ -54,7 +54,7 @@ ALL = "ALL"
 
 # Level 1: ICB
 
-st.markdown(f"####Select Integrated Care Board")
+st.markdown(f"#### Select Integrated Care Board")
 
 icb_pairs = df[["icb_code","icb_name"]].drop_duplicates().sort_values("icb_name")
 icb_opts = [ALL] + [f"{r.icb_name} ({r.icb_code})" for r in icb_pairs.itertuples()]
