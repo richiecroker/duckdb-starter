@@ -1,4 +1,3 @@
-# pages/duckdb.py
 import re
 import streamlit as st
 import duckdb
@@ -8,11 +7,11 @@ import pandas as pd
 import itertools
 import plotly.graph_objects as go
 
-st.title("Main app (app.py)")
+# title
+st.title("Main app (Oral Morphine Equivalent (OME) prescribing details")
 
 
-# pages/query_practices.py (consumer)
-
+# connect to DuckDB to get data
 
 conn = duckdb.connect("app.duckdb")  # same file
 
@@ -44,16 +43,19 @@ try:
         """).fetchdf()
 except Exception as e:
     st.error(f"Query failed: {e}")
-    st.info("If the table is missing, run the loader page first to create `practices`.")
+    st.info("If the table is missing, run the loader page first.")
 
 
 df = result.copy()
-for c in ["icb_name","icb_code","pcn_name","pcn_code","practice_name","practice_code"]:
-    df[c] = df[c].astype(str).fillna("").str.strip()
+
+# creates cascading filters for data
 
 ALL = "ALL"
 
-# ICB
+# Level 1: ICB
+
+st.markdown(f"####Select Integrated Care Board")
+
 icb_pairs = df[["icb_code","icb_name"]].drop_duplicates().sort_values("icb_name")
 icb_opts = [ALL] + [f"{r.icb_name} ({r.icb_code})" for r in icb_pairs.itertuples()]
 icb_map = {opt: opt.split(" (")[-1][:-1] for opt in icb_opts if opt != ALL}
