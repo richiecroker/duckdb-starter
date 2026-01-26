@@ -52,10 +52,9 @@ df = result.copy()
 
 ALL = "ALL"
 
+st.markdown(f"#### Select Organisation")
+
 # Level 1: ICB
-
-st.markdown(f"#### Select Integrated Care Board")
-
 icb_pairs = df[["icb_code","icb_name"]].drop_duplicates().sort_values("icb_name")
 icb_opts = [ALL] + [f"{r.icb_name} ({r.icb_code})" for r in icb_pairs.itertuples()]
 icb_map = {opt: opt.split(" (")[-1][:-1] for opt in icb_opts if opt != ALL}
@@ -78,11 +77,13 @@ pr_map = {opt: opt.split(" (")[-1][:-1] for opt in pr_opts if opt != ALL}
 sel_pr = st.selectbox("Practice", pr_opts, index=0)
 practice_codes = df_pcn["practice_code"].unique().tolist() if sel_pr == ALL else [pr_map[sel_pr]]
 
-
+# create codes_df for filtering data
 codes_df = pd.DataFrame({"practice_code": practice_codes})
 
+#register as virtual table with duckdb
 conn.register("_selected_practices", codes_df)
 
+#get OME summary data from duckdb for selected practices
 ome_result = conn.execute("""
     SELECT COALESCE(bs_subid, ing) AS bs_ing, bs_nm, SUM(ome_dose) AS ome_dose
     FROM ome_data t
@@ -91,6 +92,7 @@ ome_result = conn.execute("""
     GROUP BY bs_ing, bs_nm
 """).fetchdf()
 
+#unregister virtual table
 conn.unregister("_selected_practices")
 
 # ---- Calculate total and percentages ----
