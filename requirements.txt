@@ -1,6 +1,7 @@
 streamlit
 duckdb
 google-cloud-bigquery
+google-cloud-storage
 pyarrow
 pandas
 plotly
