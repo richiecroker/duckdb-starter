@@ -8,8 +8,17 @@ import itertools
 import plotly.graph_objects as go
 import os
 from datetime import datetime
-
-@st.cache_resource
+Commit and push the change. The good news is the data loaded successfully! 🎉I want all this to disappear:Checking data freshness...
+Rebuilding database from BigQuery (latest month: 2025-11-01 00:00:00+00:00)...
+Loading ome_data...
+Loading practices...
+Loading pcns...
+Loading ccgs...
+Loading stps...
+All tables loaded successfully!
+Saving to cache...
+Cache updated!17:37Replace all the st.info() and st.success() calls with st.spinner() for a cleaner experience:
+python@st.cache_resource
 def get_duckdb_connection():
     """Get DuckDB connection with smart caching"""
     
@@ -31,7 +40,6 @@ def get_duckdb_connection():
     if os.path.exists(local_db):
         conn = duckdb.connect(local_db)
         try:
-            # Check if tables exist and have data
             result = conn.execute("SELECT COUNT(*) FROM ome_data").fetchone()
             if result[0] > 0:
                 needs_data = False
@@ -41,45 +49,40 @@ def get_duckdb_connection():
             conn.close()
     
     if needs_data:
-        st.info("Checking data freshness...")
-        
-        # Step 2: Get latest month from BigQuery
-        bq_query = "SELECT MAX(month) as max_month FROM measures.vw__opioids_total_dmd_bs"
-        bq_max_month = bq_client.query(bq_query).to_dataframe()['max_month'][0]
-        
-        # Step 3: Check cached month in GCS
-        metadata_blob = bucket.blob(gcs_metadata_path)
-        use_cache = False
-        
-        if metadata_blob.exists():
-            cached_month_str = metadata_blob.download_as_text().strip()
-            # Handle both date and string formats
-            try:
-                cached_month = datetime.fromisoformat(cached_month_str).date()
-            except:
-                cached_month = cached_month_str
+        with st.spinner("Checking data freshness..."):
+            # Step 2: Get latest month from BigQuery
+            bq_query = "SELECT MAX(month) as max_month FROM measures.vw__opioids_total_dmd_bs"
+            bq_max_month = bq_client.query(bq_query).to_dataframe()['max_month'][0]
             
-            if str(bq_max_month) == str(cached_month):
-                use_cache = True
-                st.success(f"Cache is up to date (month: {bq_max_month})")
+            # Step 3: Check cached month in GCS
+            metadata_blob = bucket.blob(gcs_metadata_path)
+            use_cache = False
+            
+            if metadata_blob.exists():
+                cached_month_str = metadata_blob.download_as_text().strip()
+                try:
+                    cached_month = datetime.fromisoformat(cached_month_str).date()
+                except:
+                    cached_month = cached_month_str
+                
+                if str(bq_max_month) == str(cached_month):
+                    use_cache = True
         
         # Step 4: Either download from GCS or rebuild from BQ
         if use_cache:
-            st.info("Loading from cache...")
-            db_blob = bucket.blob(gcs_db_path)
-            db_blob.download_to_filename(local_db)
+            with st.spinner("Loading data from cache..."):
+                db_blob = bucket.blob(gcs_db_path)
+                db_blob.download_to_filename(local_db)
         else:
-            st.info(f"Rebuilding database from BigQuery (latest month: {bq_max_month})...")
-            build_duckdb_from_bigquery(local_db, bq_client)
-            
-            # Upload to GCS
-            st.info("Saving to cache...")
-            db_blob = bucket.blob(gcs_db_path)
-            db_blob.upload_from_filename(local_db)
-            
-            # Update metadata
-            metadata_blob.upload_from_string(str(bq_max_month))
-            st.success("Cache updated!")
+            with st.spinner(f"Loading data from BigQuery (this may take a few minutes)..."):
+                build_duckdb_from_bigquery(local_db, bq_client)
+                
+                # Upload to GCS
+                db_blob = bucket.blob(gcs_db_path)
+                db_blob.upload_from_filename(local_db)
+                
+                # Update metadata
+                metadata_blob.upload_from_string(str(bq_max_month))
         
         conn = duckdb.connect(local_db)
     
@@ -99,8 +102,6 @@ def build_duckdb_from_bigquery(db_path, bq_client):
     }
     
     for table_name, sql_file in tables.items():
-        st.info(f"Loading {table_name}...")
-        
         # Read SQL query from file
         with open(sql_file, 'r') as f:
             query = f.read()
@@ -110,7 +111,6 @@ def build_duckdb_from_bigquery(db_path, bq_client):
         conn.execute(f"CREATE TABLE IF NOT EXISTS {table_name} AS SELECT * FROM df")
     
     conn.close()
-    st.success("All tables loaded successfully!")
 
 # Use it:
 conn = get_duckdb_connection()
