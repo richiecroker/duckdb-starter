@@ -106,8 +106,30 @@ def build_duckdb_from_bigquery(db_path, bq_client):
 # Use it:
 conn = get_duckdb_connection()
 
+# Get max date safely
+try:
+    max_date_result = conn.execute("SELECT MAX(month) FROM ome_data").fetchone()
+    if max_date_result and max_date_result[0]:
+        max_date = max_date_result[0]
+        # Convert to datetime
+        if isinstance(max_date, str):
+            end_date = pd.to_datetime(max_date)
+        else:
+            end_date = pd.Timestamp(max_date)
+        
+        # Calculate start date (2 months before)
+        start_date = end_date - pd.DateOffset(months=2)
+        
+        # Format the date range
+        date_range = f"{start_date.strftime('%B')} - {end_date.strftime('%B %Y')}"
+    else:
+        date_range = "Data period unavailable"
+except Exception as e:
+    date_range = "Data period unavailable"
+    print(f"Date calculation error: {e}")
+
 st.title("Opioid Prescribing Dashboard")
-st.markdown("### Data period: October - December 2024")
+st.markdown(f"### Data period: {date_range}")
 
 try:
     result = conn.execute(
