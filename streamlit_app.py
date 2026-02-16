@@ -8,6 +8,7 @@ import itertools
 import plotly.graph_objects as go
 import os
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 @st.cache_resource
 def get_duckdb_connection():
@@ -108,7 +109,6 @@ conn = get_duckdb_connection()
 
 # Get max date and show header
 max_date = conn.execute("SELECT MAX(month) FROM ome_data").fetchone()[0]
-from dateutil.relativedelta import relativedelta
 
 end_date = pd.to_datetime(max_date)
 start_date = end_date - relativedelta(months=2)
