@@ -139,6 +139,21 @@ except Exception as e:
 
 df = result.copy()
 
+# Put header in
+
+# Get max date from local data
+max_date = conn.execute("SELECT MAX(month) FROM ome_data").fetchone()[0]
+
+# Calculate 3-month range
+from dateutil.relativedelta import relativedelta
+
+end_date = pd.to_datetime(max_date)
+start_date = end_date - relativedelta(months=2)
+
+# Format the header
+date_range = f"{start_date.strftime('%B')} - {end_date.strftime('%B %Y')}"
+st.markdown(f"### Data period: {date_range}")
+
 # creates cascading filters for data
 
 ALL = "ALL"
