@@ -106,6 +106,9 @@ def build_duckdb_from_bigquery(db_path, bq_client):
 # Use it:
 conn = get_duckdb_connection()
 
+st.title("Opioid Prescribing Dashboard")
+st.markdown("### Data period: October - December 2024")
+
 try:
     result = conn.execute(
         """
@@ -138,18 +141,6 @@ except Exception as e:
 
 
 df = result.copy()
-
-# Get max date and show header at the top
-max_date = conn.execute("SELECT MAX(month) FROM ome_data").fetchone()[0]
-end_date = pd.to_datetime(max_date)
-start_date = end_date - pd.DateOffset(months=2)
-date_range = f"{start_date.strftime('%B')} - {end_date.strftime('%B %Y')}"
-
-# Display at top using container
-header_container = st.container()
-with header_container:
-    st.title("Opioid Prescribing Dashboard")
-    st.markdown(f"### Data period: {date_range}")
 
 # creates cascading filters for data
 
